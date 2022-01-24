@@ -1,0 +1,177 @@
+<h3 class="header-after">r/cryptocurrencymemes</h3>
+			
+			<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+	@media screen and (min-width: 600px) {
+  .rpost {
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    width: 50vw;
+    min-width: 35vw;
+    max-width: 400px;
+    background-color: #f0f0f0;
+  }
+}
+      .rfeed {
+  list-style-type: none;
+}
+
+.rpost {
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 10px;
+  background-color: #f0f0f0;
+/*   min-width: 35vw;
+  max-width: 400px; */
+}
+
+.rauthorTag {
+  color: gray;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.rtitleTag {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.rimageTag {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+}
+
+.rvideoTag {
+  height: auto;
+  width: 100%;
+}
+
+    </style>
+    <title>Document</title>
+  </head>
+  <body>
+    <ul id="feed"></ul>
+    <button id="loadMoreBtn">load more</button>
+    <script>
+      let postArrayDisplay = [];
+let postArrayFetch = [];
+let itemsLoaded = 0;
+
+function fetchApi(displayOnPage) {
+  fetch("https://www.reddit.com/r/cryptocurrencymemes.json")
+    .then((data) => data.json())
+    .then((result) => {
+      dataArr = result.data.children;
+      for (let i = 2; i < dataArr.length; i++) {
+        const author = dataArr[i].data.author;
+        const title = dataArr[i].data.title;
+        const isVideo = dataArr[i].data.is_video;
+        let image;
+        if (!isVideo) {
+          image = dataArr[i].data.url_overridden_by_dest;
+        } else {
+          image = dataArr[i].data.secure_media.reddit_video.fallback_url;
+        }
+        postArrayFetch = [...postArrayFetch, { author, title, image, isVideo }];
+      }
+    })
+    .then(() => {
+      for (let i = 0; i < 5; i++) {
+        postArrayDisplay = [...postArrayDisplay, postArrayFetch[i]];
+        itemsLoaded++;
+      }
+      return postArrayDisplay;
+    })
+    .then((postArrayDisplay) => displayOnPage(postArrayDisplay));
+}
+
+function displayOnPage(postArrayDisplay) {
+  const feed = document.getElementById("feed");
+  feed.classList.add("rfeed");
+  let i;
+  if (itemsLoaded <= 5) {
+    initial = 0;
+  } else {
+    initial = itemsLoaded - 5;
+  }
+
+  for (i = initial; i < postArrayDisplay.length && postArrayFetch.length; i++) {
+    const author = postArrayDisplay[i].author;
+    const title = postArrayDisplay[i].title;
+    const image = postArrayDisplay[i].image;
+    const isVideo = postArrayDisplay[i].isVideo;
+
+    const post = document.createElement("li");
+    post.classList.add("rpost");
+
+    const authorTag = document.createElement("p");
+    authorTag.classList.add("rauthorTag");
+    authorTag.innerHTML = `Posted by u/${author}`;
+    post.appendChild(authorTag);
+
+    const titleTag = document.createElement("p");
+    titleTag.classList.add("rtitleTag");
+    titleTag.innerHTML = title;
+    post.appendChild(titleTag);
+
+    if (!isVideo) {
+      if (validateImage(image)) {
+        const imageTag = document.createElement("img");
+        imageTag.classList.add("rimageTag");
+        imageTag.src = image;
+        post.appendChild(imageTag);
+      }
+    } else {
+      const videoTag = document.createElement("VIDEO");
+      videoTag.classList.add("rvideoTag");
+      videoTag.setAttribute("src", image);
+      videoTag.setAttribute("width", "1000");
+      // videoTag.setAttribute("height", "240");
+      videoTag.setAttribute("controls", "controls");
+      post.appendChild(videoTag);
+    }
+
+    feed.appendChild(post);
+  }
+}
+
+function validateImage(imagePath) {
+  let allowedExtensions = /(\.jpg|\.jpeg|\.png|\.gif)$/i;
+  if (!allowedExtensions.exec(imagePath)) {
+    return false;
+  }
+  return true;
+}
+
+function loadMore() {
+  let currentCount = itemsLoaded;
+  for (
+    let i = itemsLoaded;
+    itemsLoaded <= postArrayFetch.length && i < currentCount + 5;
+    i++
+  ) {
+    postArrayDisplay = [...postArrayDisplay, postArrayFetch[i]];
+    itemsLoaded++;
+  }
+
+  displayOnPage(postArrayDisplay);
+}
+
+fetchApi(displayOnPage);
+
+// load more click
+document.getElementById("loadMoreBtn").onclick = () => {
+  loadMore();
+};
+
+    </script>
+  </body>
+</html>
+        </div>
